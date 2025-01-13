@@ -22,7 +22,7 @@
 
 1. 克隆仓库：
     ```sh
-    git clone git@github.com:huaguihai/DepinedBot.git
+    git clone https://github.com/huaguihai/DepinedBot.git
     cd DepinedBot
     ```
 
