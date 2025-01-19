@@ -125,10 +125,52 @@ export async function getEarnings(token, proxy) {
 
         return response.data;
     } catch (error) {
-        log.error('获取用户收益失败:', error.message || error);
+        log.error('Error fetching user info:', error.message || error);
         return null;
     }
 }
+
+// 获取用户推荐统计
+export async function getUserRef(token, proxy) {
+    const agent = newAgent(proxy);
+    try {
+        const response = await axios.get('https://api.depined.org/api/referrals/stats', {
+            headers: {
+                ...headers,
+                'Authorization': 'Bearer ' + token
+            },
+            httpsAgent: agent,
+            httpAgent: agent
+        });
+
+        return response.data;
+    } catch (error) {
+        log.error('Error fetching user info:', error.message || error);
+        return null;
+    }
+}
+
+// 领取积分
+export async function claimPoints(token, proxy) {
+    const agent = newAgent(proxy);
+    try {
+        const payload = {}
+        const response = await axios.post('https://api.depined.org/api/referrals/claim_points', payload, {
+            headers: {
+                ...headers,
+                'Authorization': 'Bearer ' + token
+            },
+            httpsAgent: agent,
+            httpAgent: agent
+        });
+
+        return response.data;
+    } catch (error) {
+        log.error(`Error when claiming points: ${error.message}`);
+        return null;
+    }
+}
+
 // 连接小部件函数
 export async function connect(token, proxy) {
     const agent = newAgent(proxy);
@@ -145,7 +187,7 @@ export async function connect(token, proxy) {
 
         return response.data;
     } catch (error) {
-        log.error(`更新连接状态失败: ${error.message}`);
+        log.error(`Error when update connection: ${error.message}`);
         return null;
     }
 }
