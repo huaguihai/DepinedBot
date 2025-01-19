@@ -35,7 +35,7 @@ const main = async () => {
                     log.info(`Account ${index + 1} info:`, { email, verified, current_tier, points_balance });
                 }
 
-                await checkUserRewards(token, proxy);
+                await checkUserRewards(token, proxy, index);
 
                 setInterval(async () => {
                     const connectRes = await utils.connect(token, proxy);
@@ -46,7 +46,7 @@ const main = async () => {
                 }, 1000 * 30); // Run every 30 seconds
 
                 setInterval(async () => {
-                    await checkUserRewards(token, proxy);
+                    await checkUserRewards(token, proxy, index);
                 }, 1000 * 60 * 60 * 24); // check every 24 hours
 
             } catch (error) {
@@ -54,7 +54,7 @@ const main = async () => {
             }
         });
 
-        const checkUserRewards = async (token, proxy) => {
+        const checkUserRewards = async (token, proxy, index) => {
             try {
                 const response = await utils.getUserRef(token, proxy)
                 const { total_unclaimed_points } = response?.data || 0;
