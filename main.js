@@ -23,50 +23,69 @@ const main = async () => {
     }
 
     try {
-        log.info(`开始处理所有账户:`, tokens.length);
+        log.info(`Starting Program for all accounts:`, tokens.length);
 
-        // 处理每个账户
         const accountsProcessing = tokens.map(async (token, index) => {
             const proxy = proxies[index % proxies.length] || null;
             try {
-                // 获取用户信息
                 const userData = await utils.getUserInfo(token, proxy);
 
                 if (userData?.data) {
                     const { email, verified, current_tier, points_balance } = userData.data
-                    log.info(`账户 ${index + 1} 信息:`, { email, verified, current_tier, points_balance });
+                    log.info(`Account ${index + 1} info:`, { email, verified, current_tier, points_balance });
                 }
 
-                // 每30秒执行一次连接和收益检查
+                await checkUserRewards(token, proxy);
+
                 setInterval(async () => {
                     const connectRes = await utils.connect(token, proxy);
-                    log.info(`账户 ${index + 1} 连接结果:`, connectRes || { message: '未知错误' });
+                    log.info(`Ping result for account ${index + 1}:`, connectRes || { message: 'unknown error' });
 
                     const result = await utils.getEarnings(token, proxy);
-                    log.info(`账户 ${index + 1} 收益结果:`, result?.data || { message: '未知错误' });
-                }, 1000 * 30); // 每30秒运行一次
+                    log.info(`Earnings result for account ${index + 1}:`, result?.data || { message: 'unknown error' });
+                }, 1000 * 30); // Run every 30 seconds
+
+                setInterval(async () => {
+                    await checkUserRewards(token, proxy);
+                }, 1000 * 60 * 60 * 24); // check every 24 hours
 
             } catch (error) {
-                log.error(`处理账户 ${index} 时出错: ${error.message}`);
+                log.error(`Error processing account ${index}: ${error.message}`);
             }
         });
 
+        const checkUserRewards = async (token, proxy) => {
+            try {
+                const response = await utils.getUserRef(token, proxy)
+                const { total_unclaimed_points } = response?.data || 0;
+                if (total_unclaimed_points > 0) {
+                    log.info(`Account ${index + 1} has ${total_unclaimed_points} unclaimed points, trying to claim it...`);
+                    const claimResponse = await utils.claimPoints(token, proxy);
+                    if (claimResponse.code === 200) {
+                        log.info(`Account ${index + 1} claimed successfully! ${total_unclaimed_points} points`);
+                    }
+                }
+            } catch (error) {
+                log.error(`Error checking user rewards: ${error.message}`);
+            }
+        }
+
         await Promise.all(accountsProcessing);
     } catch (error) {
-        log.error(`主循环出错: ${error.message}`);
+        log.error(`Error in main loop: ${error.message}`);
     }
 };
 
 
 // 处理SIGINT信号（Ctrl+C）
 process.on('SIGINT', () => {
-    log.warn(`收到SIGINT信号，正在清理并退出程序...`);
+    log.warn(`Process received SIGINT, cleaning up and exiting program...`);
     process.exit(0);
 });
 
 // 处理SIGTERM信号
 process.on('SIGTERM', () => {
-    log.warn(`收到SIGTERM信号，正在清理并退出程序...`);
+    log.warn(`Process received SIGTERM, cleaning up and exiting program...`);
     process.exit(0);
 });
 
